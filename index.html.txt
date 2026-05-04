@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عروض أسعار شركة خطوة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            black: '#000000',
+                            dark: '#0C0C0C',
+                            surface: '#090C10',
+                            gray: '#333232',
+                            green: '#25D366',
+                            acidGreen: '#1FDB38',
+                            yellow: '#E2E419',
+                            textGray: '#D5D5D5'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0a0a0a; 
+            color: #D5D5D5;
+            min-height: 100vh;
+        }
+        
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background-image: url(https://i.ibb.co/d4n89Fdb/imgi-4-Group-3-4.png);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .service-card { transition: all 0.2s ease; }
+
+        .watermark-container {
+            position: relative;
+            background-color: #0a0a0a; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .watermark-image-pdf {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 450px;
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="bg-brand-dark/95 backdrop-blur-xl border-b border-brand-gray sticky top-0 z-50 no-print">
+        <div class="max-w-full mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="border-r-2 border-brand-yellow pr-3 h-12 flex items-center">
+                    <a href="https://khatwaa.com/" target="_blank" class="block transition-transform hover:scale-105 active:scale-95">
+                        <img src="https://i.ibb.co/d4n89Fdb/imgi-4-Group-3-4.png" alt="KHOTWA" class="h-10 w-auto">
+                    </a>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="text-left border-l pl-4 border-brand-gray">
+                    <p class="text-[9px] text-brand-textGray font-bold uppercase tracking-tighter">الإجمالي </p>
+                    <p id="headerTotal" class="text-xl font-black text-brand-yellow leading-tight">0 ر.س</p>
+                </div>
+                <button onclick="generatePDF()" class="bg-brand-yellow text-black px-6 py-2 rounded-lg text-xs font-black hover:bg-white transition-all">
+                    العرض المالي 
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="p-6 relative z-10">
+        <div class="max-w-5xl mx-auto mb-8 no-print">
+            <div class="bg-brand-surface border border-brand-gray p-6 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-1 w-full text-right">
+                    <label class="block text-[15px] font-black text-brand-yellow uppercase mb-2 tracking-widest">اسم العميل:</label>
+                    <input type="text" id="clientName" placeholder="أدخل اسم الجهة أو العميل..." class="w-full px-4 py-3 rounded-xl bg-brand-dark border border-brand-gray text-white focus:border-brand-yellow focus:outline-none font-bold text-sm transition-all placeholder:text-brand-gray/50">
+                </div>
+                <button onclick="addMonth()" class="bg-white text-black px-8 py-3 rounded-xl font-black text-sm hover:bg-brand-acidGreen transition shadow-md">
+                      شهر إضافي
+                </button>
+            </div>
+        </div>
+
+        <div id="monthsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-[1600px] mx-auto no-print"></div>
+    </main>
+
+    <!-- PDF Template (Hidden) -->
+    <div id="pdf-template" class="hidden watermark-container" style="width: 800px; min-height: 1120px; padding: 50px; direction: rtl; background-color: #0a0a0a;">
+        <img src="https://i.ibb.co/d4n89Fdb/imgi-4-Group-3-4.png" class="watermark-image-pdf" alt="watermark">
+
+        <div class="relative z-10 flex flex-col h-full w-full" style="direction: rtl;">
+            <!-- Header Section in PDF -->
+            <div class="flex flex-col items-center mb-8 border-b-2 border-brand-yellow pb-8">
+                <div class="mb-6">
+                    <img src="https://i.ibb.co/d4n89Fdb/imgi-4-Group-3-4.png" alt="KHOTWA Logo" style="height: 80px; width: auto;">
+                </div>
+                <div class="w-full flex justify-between items-center px-2 font-bold text-brand-textGray text-[12px]">
+                    <p style="direction: ltr;">Date: <span id="pdf-date" class="text-white"></span></p>
+                    <p style="direction: ltr;">Reference: <span id="pdf-ref" class="text-white"></span></p>
+                </div>
+            </div>
+
+            <!-- Client Info -->
+            <div class="mb-6 bg-brand-surface p-6 rounded-xl border border-brand-gray shadow-lg text-right">
+                <h2 id="pdf-client" class="text-2xl font-black text-white leading-tight"></h2>
+            </div>
+
+            <!-- Services Area -->
+            <div id="pdf-content-area" class="space-y-4 flex-grow text-right"></div>
+
+            <!-- Grand Total Section -->
+            <div class="mt-8" style="direction: rtl;">
+                <div class="flex flex-col items-center justify-center bg-brand-dark border-2 border-brand-yellow p-6 rounded-[2rem] shadow-xl text-center">
+                    <p class="text-brand-textGray text-[15px] font-bold opacity-60 mb-1">إجمالي قيمة الخدمات المختارة</p>
+                    <div class="flex items-baseline gap-2" style="direction: rtl;">
+                        <span id="pdf-total" class="text-3xl font-black text-white tracking-tighter"></span>
+                        <span class="text-brand-yellow text-sm font-black uppercase">ر.س</span>
+                    </div>
+                 </div>
+                 
+                 <div class="mt-10 text-center" style="width: 100%; display: block;">
+                    <p style="color: #E2E419; font-weight: 900; font-size: 26px; font-style: italic; text-align: center; direction: rtl; margin: 0 auto; display: inline-block; width: 100%;">
+                        اسأل عن خصم التعاقد الإضافي 
+                    </p>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const servicesData = [
+            { id: 'create', name: 'إنشاء متجر/موقع', basePrice: 2600, promoPrice: 1300 },
+            { id: 'uiux', name: 'تعديل UI/UX', basePrice: 1700, promoPrice: 1200 },
+            { id: 'ads', name: 'الحملات الإعلانية', basePrice: 2000, promoPrice: 1500 },
+            { id: 'seo', name: 'تحسين SEO', basePrice: 2000, promoPrice: 1500 },
+            { id: 'social', name: 'إدارة السوشيال', basePrice: 1600, promoPrice: 1000 },
+            { id: 'cro', name: 'تحسين CRO', basePrice: 800, promoPrice: 500 },
+            { id: 'landing', name: 'تصميم صفحة هبوط', basePrice: 1500, promoPrice: 1000 },
+            { id: 'branding', name: 'هوية تجارية', basePrice: 3500, promoPrice: 2000 },
+            { id: 'application', name: 'تطبيق سنة', basePrice: 3500, promoPrice: 2000 }
+        ];
+
+        const arabicOrdinalMonths = [
+            "الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", 
+            "السابع", "الثامن", "التاسع", "العاشر", "الحادي عشر", "الثاني عشر"
+        ];
+
+        let months = [{ id: 1, selected: [] }];
+
+        function getMonthTitle(index) {
+            return `الشهر ${arabicOrdinalMonths[index] || (index + 1)}`;
+        }
+
+        function renderMonths() {
+            const container = document.getElementById('monthsContainer');
+            if (!container) return;
+            
+            container.innerHTML = months.map((month, index) => {
+                const isDiscounted = month.selected.length >= 2;
+                return `
+                <div class="bg-brand-surface rounded-2xl p-5 shadow-xl border border-brand-gray flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4 pb-2 border-b border-brand-gray/30">
+                            <h3 class="font-black text-base text-white">${getMonthTitle(index)}</h3>
+                            ${months.length > 1 ? `<button onclick="removeMonth(${month.id})" class="text-red-500/70 hover:text-red-500 text-[10px] font-bold">حذف</button>` : ''}
+                        </div>
+                        <div class="space-y-2">
+                            ${servicesData.map(s => {
+                                const active = month.selected.includes(s.id);
+                                return `
+                                <div onclick="toggleService(${month.id}, '${s.id}')" class="service-card flex items-center justify-between px-3 py-3 rounded-lg cursor-pointer border transition-all ${active ? 'border-brand-yellow bg-brand-yellow/5' : 'border-brand-dark bg-brand-dark/40 hover:border-brand-gray'}">
+                                    <!-- تكبير خط اسم الخدمة -->
+                                    <span class="font-black text-[14px] ${active ? 'text-brand-yellow' : 'text-brand-textGray'}">${s.name}</span>
+                                    <div class="text-left font-black leading-tight">
+                                        <!-- تكبير خط السعر الأساسي -->
+                                        <span class="text-[12px] ${active && isDiscounted ? 'line-through text-brand-gray' : 'text-brand-textGray'}">${s.basePrice}</span>
+                                        <!-- تكبير خط السعر المخفض -->
+                                        ${active && isDiscounted ? `<br><span class="text-brand-acidGreen text-[14px]">${s.promoPrice}</span>` : ''}
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    <div class="mt-5 pt-3 border-t border-brand-gray/50">
+                         <div id="m-total-${month.id}" class="font-black text-xl text-center text-white"></div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            updateTotals();
+        }
+
+        function toggleService(mId, sId) {
+            const m = months.find(x => x.id === mId);
+            if (!m) return;
+            m.selected = m.selected.includes(sId) ? m.selected.filter(i => i !== sId) : [...m.selected, sId];
+            renderMonths();
+        }
+
+        function addMonth() {
+            const nextInternalId = Date.now();
+            months.push({ id: nextInternalId, selected: [] });
+            renderMonths();
+        }
+
+        function removeMonth(id) {
+            months = months.filter(m => m.id !== id);
+            renderMonths();
+        }
+
+        function updateTotals() {
+            let grand = 0;
+            months.forEach(m => {
+                const disc = m.selected.length >= 2;
+                let monthSum = 0;
+                m.selected.forEach(sid => {
+                    const s = servicesData.find(x => x.id === sid);
+                    if (s) {
+                        monthSum += disc ? s.promoPrice : s.basePrice;
+                    }
+                });
+                grand += monthSum;
+                const mTotalEl = document.getElementById(`m-total-${m.id}`);
+                if(mTotalEl) mTotalEl.innerText = monthSum.toLocaleString() + ' ر.س';
+            });
+            const headerTotal = document.getElementById('headerTotal');
+            if (headerTotal) headerTotal.innerText = grand.toLocaleString() + ' ر.س';
+            return grand;
+        }
+
+        function generatePDF() {
+            try {
+                const client = document.getElementById('clientName').value || "العميل الكريم";
+                document.getElementById('pdf-client').innerText = client;
+                document.getElementById('pdf-total').innerText = updateTotals().toLocaleString();
+                
+                document.getElementById('pdf-date').innerText = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+                
+                document.getElementById('pdf-ref').innerText = 'KH-' + Math.floor(10000 + Math.random() * 90000);
+
+                let html = '';
+                months.forEach((m, index) => {
+                    if (m.selected.length === 0) return;
+                    const disc = m.selected.length >= 2;
+                    let monthTotal = 0;
+                    let totalSavings = 0;
+                    
+                    let servicesHtml = '';
+                    m.selected.forEach(sid => {
+                        const s = servicesData.find(x => x.id === sid);
+                        if (s) {
+                            const p = disc ? s.promoPrice : s.basePrice;
+                            monthTotal += p;
+                            if (disc) {
+                                totalSavings += (s.basePrice - s.promoPrice);
+                            }
+                            servicesHtml += `
+                            <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #1a1a1a; direction: rtl;">
+                                <span style="color:#D5D5D5; font-size:17px;">${s.name}</span>
+                                <span style="color:#FFFFFF; font-weight:900; font-size:17px;">${p.toLocaleString()} ر.س</span>
+                            </div>`;
+                        }
+                    });
+
+                    html += `
+                    <div style="padding:20px 20px; background:#090C10; border-radius:15px; border:1px solid #333232; margin-bottom:12px; direction: rtl; text-align: right;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #E2E419; padding-bottom:6px;">
+                            <h3 style="font-weight:900; font-size:15px; color:#FFFFFF;">${getMonthTitle(index)}</h3>
+                            ${disc ? '<span style="font-size:10px; background:#1FDB38; color:#000; padding:2px 8px; border-radius:8px; font-weight:900;">OFFER APPLIED</span>' : ''}
+                        </div>
+                        ${servicesHtml}
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                            ${disc ? `<span style="color:#1FDB38; font-size:16px; font-weight:bold;">وفرت  ${totalSavings.toLocaleString()} ر.س</span>` : '<span></span>'}
+                            <span style="font-weight:900; font-size:20px; color:#E2E419;">${monthTotal.toLocaleString()} ر.س</span>
+                        </div>
+                    </div>`;
+                });
+
+                document.getElementById('pdf-content-area').innerHTML = html;
+                const element = document.getElementById('pdf-template');
+                element.classList.remove('hidden');
+
+                const opt = {
+                    margin: 0,
+                    filename: `Khotwa_Offer_${client}.pdf`,
+                    image: { type: 'jpeg', quality: 1 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0a0a0a', letterRendering: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                html2pdf().from(element).set(opt).save().then(() => element.classList.add('hidden'));
+            } catch (error) { console.error("PDF Error:", error); }
+        }
+
+        window.onload = renderMonths;
+    </script>
+</body>
+</html>
